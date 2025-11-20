@@ -1,0 +1,2014 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <!-- ============== الجزء 1: إعدادات الصفحة والمكتبات الخارجية ============== -->
+    
+    <!-- البيانات الوصفية الأساسية -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام تقييم جودة الورقة الامتحانية</title>
+
+    <!-- استيراد الخطوط من Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- مكتبة Font Awesome للأيقونات -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- مكتبات JavaScript للمعالجة والتصدير -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- ============== نهاية الجزء 1 ============== -->
+    
+    <!-- ============== الجزء 2: أنماط CSS لتصميم الواجهة ============== -->
+    <style>
+        :root {
+            --primary-color: #004a99; /* لون أكاديمي أغمق */
+            --secondary-color: #007bff;
+            --accent-color: #b3e0ff;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --danger-color: #dc3545;
+            --text-color: #212121;
+            --background-color: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --container-bg: white;
+            --border-color: #dee2e6;
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --gradient-bg: linear-gradient(135deg, #007bff 0%, #004a99 100%);
+        }
+
+        .dark-mode {
+            --primary-color: #58a6ff;
+            --secondary-color: #3088ff;
+            --accent-color: #1c3d5e;
+            --light-color: #2c3e50;
+            --dark-color: #e0e0e0;
+            --success-color: #66bb6a;
+            --warning-color: #ffa726;
+            --info-color: #26c6da;
+            --danger-color: #ef5350;
+            --text-color: #ecf0f1;
+            --background-color: #141e30;
+            --container-bg: #1d2b3e;
+            --border-color: #4a4a4a;
+            --shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        
+        body {
+            font-family: 'Cairo', sans-serif;
+            color: var(--text-color);
+            background: var(--background-color);
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+        
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .app-header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: var(--container-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            border-top: 5px solid var(--primary-color);
+        }
+        
+        .header-content { flex-grow: 1; text-align: right; }
+
+        .app-title {
+            font-family: 'Amiri', serif;
+            font-size: 2.8rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .app-subtitle {
+            font-size: 1.1rem;
+            color: var(--dark-color);
+            opacity: 0.9;
+        }
+        
+        .container {
+            background: var(--container-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+        }
+        
+        .section-title {
+            font-family: 'Amiri', serif;
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+        
+        .section-title i {
+            font-size: 1.5rem;
+            color: var(--secondary-color);
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-color);
+            font-size: 1rem;
+        }
+
+        label i { color: var(--secondary-color); }
+        
+        input[type="text"],
+        input[type="date"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1rem;
+            background-color: var(--light-color);
+            color: var(--text-color);
+        }
+        
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--secondary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--secondary-color) 20%, transparent);
+        }
+        
+        /* نمط خاص لأزرار الاختيار (Radio Buttons) للتبديل */
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            background: var(--light-color);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .radio-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+        .radio-group label:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        .radio-group input[type="radio"] {
+            accent-color: var(--primary-color);
+            width: 18px;
+            height: 18px;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .file-upload-section {
+            background-color: color-mix(in srgb, var(--accent-color) 30%, transparent);
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px dashed var(--accent-color);
+            text-align: center;
+        }
+                
+        .file-upload-btn {
+            border: 2px solid var(--secondary-color);
+            color: var(--secondary-color);
+            background: transparent;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload-btn:hover {
+            background: var(--secondary-color);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px color-mix(in srgb, var(--secondary-color) 30%, transparent);
+        }
+        
+        input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-upload { position: relative; overflow: hidden; display: inline-block; width: 100%; }
+        
+        .upload-status-text {
+            font-size: 0.9rem;
+            color: var(--success-color);
+            margin-top: 10px;
+            display: block;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 25px;
+            background: var(--gradient-bg);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+                
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary { background: var(--dark-color); }
+        .btn-print { background: linear-gradient(135deg, #673ab7 0%, #311b92 100%); font-size: 1.1rem; padding: 14px 30px; }
+        .btn-success { background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%); }
+        .btn-info { background: linear-gradient(135deg, var(--info-color) 0%, #117a8b 100%); color: white; }
+        
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 30px 0;
+            gap: 15px;
+        }
+        
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 1.2rem;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* مفتاح الوضع الليلي */
+        .theme-switch-wrapper { display: flex; align-items: center; gap: 10px; }
+        .theme-switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+        .theme-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .slider.round { border-radius: 34px; }
+        .slider.round:before { border-radius: 50%; }
+        
+        /* ============== نهاية الجزء 2 ============== */
+
+        /* ============== الجزء 3: أنماط التقرير والطباعة ============== */
+        
+        .report-container {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .report-page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 15mm;
+            margin: 10mm auto;
+            box-shadow: var(--shadow);
+            background: white;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            color: #000; /* لون النص أسود للطباعة */
+        }
+
+        .page-content { flex-grow: 1; }
+        
+        /* صفحة الغلاف */
+        .cover-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .logos-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 40px;
+            padding: 0 20mm;
+        }
+        
+        .logo { max-width: 120px; max-height: 120px; object-fit: contain; }
+        .logo.right { justify-self: flex-start; }
+        .logo.left { justify-self: flex-end; }
+
+        .cover-main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .cover-title {
+            font-size: 32px;
+            margin: 20px 0;
+            color: #004a99;
+            line-height: 1.5;
+            font-family: 'Amiri', serif;
+            border-bottom: 3px solid #004a99;
+            border-top: 3px solid #004a99;
+            padding: 15px 0;
+        }
+        
+        .cover-details {
+            font-size: 20px;
+            color: #000;
+        }
+        .cover-details p {
+            margin: 10px 0;
+        }
+
+        .cover-footer {
+            font-size: 18px;
+            color: #000;
+            width: 100%;
+            margin-top: 50px;
+        }
+
+        /* ترويسة وتذييل الصفحات الداخلية */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #004a99;
+            color: #000;
+        }
+        
+        .header-logo-left, .header-logo-right { display: flex; align-items: center; width: 100px; }
+        .header-logo-left { justify-content: flex-end; }
+        .header-logo-right { justify-content: flex-start; }
+        .header-logo { max-width: 60px; max-height: 60px; object-fit: contain; }
+        .header-title { flex-grow: 1; text-align: center; font-family: 'Amiri', serif; color: #004a99; }
+        .header-title h3 { font-size: 20px; margin: 0 0 5px 0; color: #004a99; }
+        .header-title p { font-size: 16px; margin: 0; color: #333; }
+        
+        .report-footer {
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            color: #000;
+            page-break-inside: avoid !important;
+        }
+        
+        .signature-area {
+            flex: 1;
+            text-align: center;
+        }
+        .signature-area p {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .signature-image {
+            max-width: 100px;
+            height: 50px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+        .signature-placeholder {
+            border-bottom: 1px solid #000;
+            width: 150px;
+            height: 50px;
+            margin: 0 auto;
+        }
+
+        /* أنماط الجداول والرسوم البيانية */
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; color: #000; }
+        th, td { padding: 10px; text-align: right; border: 1px solid #999; }
+        th { background-color: #e9ecef; font-weight: bold; color: #004a99; text-align: center; }
+        td:first-child, th:first-child { text-align: center; } /* ترقيم */
+        td:nth-child(3), th:nth-child(3) { text-align: center; } /* الدرجات */
+        
+        .table-notes {
+            text-align: left;
+            font-style: italic;
+            font-size: 12px;
+            padding: 8px;
+        }
+
+        .chart-container { width: 100%; height: 350px; margin: 20px 0; position: relative; page-break-inside: avoid; }
+        .radar-chart-container { width: 90%; max-width: 500px; height: 450px; margin: 20px auto; position: relative; page-break-inside: avoid; }
+        
+        .report-section-title {
+            font-family: 'Amiri', serif;
+            font-size: 22px;
+            color: #004a99;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+
+        .summary-box {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-right: 5px solid var(--primary-color);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            page-break-inside: avoid;
+        }
+        .summary-box h5 {
+            font-family: 'Amiri', serif;
+            font-size: 18px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        .summary-box p {
+            margin-bottom: 5px;
+            line-height: 1.6;
+        }
+        .summary-box .rating {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        table td[class*="rating"] {
+             font-weight: bold;
+        }
+        .rating.excellent { color: #1e7d34; } /* لون أخضر أغمق */
+        .rating.good { color: #5a940c; }
+        .rating.acceptable { color: #e69500; } /* لون أصفر/برتقالي أغمق */
+        .rating.weak { color: #c82333; } /* لون أحمر أغمق */
+
+        /* ============== نهاية الجزء 3 ============== */
+
+        /* ============== الجزء 4: أنماط خاصة بالطباعة والتجاوب ============== */
+        
+        @media (max-width: 768px) {
+            .main-container { padding: 10px; }
+            .app-header { flex-direction: column; gap: 20px; text-align: center; }
+            .header-content { text-align: center; }
+            .app-title { font-size: 2rem; }
+            .container { padding: 20px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .actions { flex-direction: column; gap: 10px; }
+            .btn { width: 100%; }
+        }
+    </style>
+    <!-- ============== نهاية الجزء 4 ============== -->
+</head>
+<body>
+    <!-- ============== الجزء 5: هيكل الصفحة (HTML) ============== -->
+    <div class="main-container">
+        <header class="app-header">
+            <div class="header-content">
+                <h1 class="app-title">نظام تقييم جودة الورقة الامتحانية</h1>
+                <p class="app-subtitle">أداة لإنشاء تقارير التقييم بناءً على نموذج الجودة المعتمد</p>
+            </div>
+            <!-- مفتاح تبديل الوضع الليلي -->
+            <div class="theme-switch-wrapper">
+                <i class="fas fa-moon"></i>
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+                <i class="fas fa-sun"></i>
+            </div>
+        </header>
+        
+        <section class="container">
+            <h2 class="section-title"><i class="fas fa-file-excel"></i> 1. رفع ملف بيانات التقييم (Excel)</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="dataFile"><i class="fas fa-upload"></i> اختر ملف Excel المعبأ</label>
+                    <div class="file-upload-section">
+                        <div class="file-upload">
+                            <button class="file-upload-btn"><i class="fas fa-folder-open"></i> اختر ملف البيانات</button>
+                            <input type="file" id="dataFile" accept=".xlsx,.xls">
+                        </div>
+                        <span id="fileName" class="upload-status-text">لم يتم اختيار ملف</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="jsonData"><i class="fas fa-paste"></i> أو الصق بيانات JSON هنا (للتجربة)</label>
+                    <textarea id="jsonData" placeholder="انسخ محتوى ملف template_instructions.txt هنا"></textarea>
+                    <button id="loadJsonData" class="btn btn-secondary" style="margin-top: 10px;"><i class="fas fa-vial"></i> تجربة ببيانات نموذجية</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="container">
+            <h2 class="section-title"><i class="fas fa-file-invoice"></i> 2. البيانات الأساسية للتقرير</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="courseName"><i class="fas fa-book"></i> اسم المقرر</label>
+                    <input type="text" id="courseName" placeholder="مثال: تصميم قواعد البيانات">
+                </div>
+                <div class="form-group">
+                    <label for="courseCode"><i class="fas fa-barcode"></i> كود المقرر</label>
+                    <input type="text" id="courseCode" placeholder="مثال: CS311">
+                </div>
+                <div class="form-group">
+                    <label for="courseLevel"><i class="fas fa-layer-group"></i> المستوى الدراسي</label>
+                    <input type="text" id="courseLevel" placeholder="مثال: المستوى الثالث">
+                </div>
+                <div class="form-group">
+                    <label for="academicYear"><i class="fas fa-calendar-alt"></i> العام الأكاديمي</label>
+                    <input type="text" id="academicYear" placeholder="مثال: 2024-2025">
+                </div>
+                <div class="form-group">
+                    <label for="evaluationDate"><i class="fas fa-calendar-check"></i> تاريخ التقييم</label>
+                    <input type="date" id="evaluationDate">
+                </div>
+                <!-- الجزء الجديد المضاف: تحديد الدرجة الكلية للمقالي -->
+                <div class="form-group">
+                    <label><i class="fas fa-calculator"></i> الدرجة الكلية للمقالي</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="essayTotal" value="15" checked> من 15 درجة</label>
+                        <label><input type="radio" name="essayTotal" value="10"> من 10 درجات</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="container">
+            <h2 class="section-title"><i class="fas fa-image"></i> 3. الشعارات والتواقيع</h2>
+            <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <!-- الشعارات -->
+                <div class="form-group">
+                    <label><i class="fas fa-university"></i> شعار الجامعة</label>
+                    <div class="file-upload-section">
+                        <div class="file-upload">
+                            <button class="file-upload-btn"><i class="fas fa-upload"></i> رفع</button>
+                            <input type="file" id="universityLogo" accept="image/*">
+                        </div>
+                        <span id="universityLogoStatus" class="upload-status-text"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-graduation-cap"></i> شعار الكلية</label>
+                    <div class="file-upload-section">
+                        <div class="file-upload">
+                            <button class="file-upload-btn"><i class="fas fa-upload"></i> رفع</button>
+                            <input type="file" id="collegeLogo" accept="image/*">
+                        </div>
+                        <span id="collegeLogoStatus" class="upload-status-text"></span>
+                    </div>
+                </div>
+                
+                <!-- التواقيع -->
+                <div class="form-group">
+                    <label><i class="fas fa-signature"></i> توقيع (لجنة القياس)</label>
+                    <div class="file-upload-section">
+                        <div class="file-upload">
+                            <button class="file-upload-btn"><i class="fas fa-upload"></i> رفع</button>
+                            <input type="file" id="evaluatorSignature" accept="image/*">
+                        </div>
+                        <span id="evaluatorSignatureStatus" class="upload-status-text"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-signature"></i> توقيع مدير البرنامج</label>
+                    <div class="file-upload-section">
+                        <div class="file-upload">
+                            <button class="file-upload-btn"><i class="fas fa-upload"></i> رفع</button>
+                            <input type="file" id="directorSignature" accept="image/*">
+                        </div>
+                        <span id="directorSignatureStatus" class="upload-status-text"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-signature"></i> توقيع وكيل الكلية</label>
+                    <div class="file-upload-section">
+                        <div class="file-upload">
+                            <button class="file-upload-btn"><i class="fas fa-upload"></i> رفع</button>
+                            <input type="file" id="headSignature" accept="image/*">
+                        </div>
+                        <span id="headSignatureStatus" class="upload-status-text"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="actions">
+            <button id="downloadTemplate" class="btn btn-secondary"><i class="fas fa-file-download"></i> تحميل نموذج Excel فارغ</button>
+            <button id="generateReport" class="btn"><i class="fas fa-sync-alt"></i> إنشاء التقرير</button>
+            <button id="printReport" class="btn btn-print" disabled><i class="fas fa-print"></i> طباعة التقرير</button>
+            <button id="exportPDF" class="btn btn-success" disabled><i class="fas fa-file-pdf"></i> تصدير PDF</button>
+            <button id="exportJSON" class="btn btn-info" disabled><i class="fas fa-file-code"></i> تصدير ملف البيانات (JSON)</button>
+        </section>
+        
+        <div class="loading">
+            <div class="spinner"></div>
+            <div class="loading-text">جاري معالجة البيانات وإنشاء التقرير...</div>
+        </div>
+        
+        <div id="reportContainer" class="report-container"></div>
+    </div>
+    <!-- ============== نهاية الجزء 5 ============== -->
+
+    <!-- ============== الجزء 6: المنطق البرمجي (JavaScript) ============== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // تعريف العناصر
+            const dataFileInput = document.getElementById('dataFile');
+            const generateReportBtn = document.getElementById('generateReport');
+            const printReportBtn = document.getElementById('printReport');
+            const exportPDFBtn = document.getElementById('exportPDF');
+            const exportJSONBtn = document.getElementById('exportJSON');
+            
+            const downloadTemplateBtn = document.getElementById('downloadTemplate');
+            const reportContainer = document.getElementById('reportContainer');
+            const fileNameDisplay = document.getElementById('fileName');
+            const loadingElement = document.querySelector('.loading');
+            const themeSwitch = document.getElementById('checkbox');
+            const jsonDataInput = document.getElementById('jsonData');
+            const loadJsonDataBtn = document.getElementById('loadJsonData');
+
+            // متغير الحالة المركزي
+            let reportData = {
+                courseInfo: {},
+                logos: { university: '', college: '' },
+                signatures: { evaluator: '', director: '', head: '' },
+                sheets: {},
+                analysis: {}
+            };
+
+            // ---- معالجات رفع الملفات ----
+
+            dataFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if(file) {
+                    fileNameDisplay.textContent = `الملف المحدد: ${file.name}`;
+                    fileNameDisplay.style.color = 'var(--success-color)';
+                }
+            });
+
+            loadJsonDataBtn.addEventListener('click', () => {
+                if (jsonDataInput.value.trim() === "") {
+                    showError("يرجى لصق بيانات JSON أولاً.");
+                    return;
+                }
+                fileNameDisplay.textContent = "تم استخدام بيانات JSON التجريبية.";
+                fileNameDisplay.style.color = 'var(--warning-color)';
+            });
+
+            function setupImageUploader(inputId, statusId, dataObject, key) {
+                document.getElementById(inputId).addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    const statusEl = document.getElementById(statusId);
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            dataObject[key] = event.target.result;
+                            statusEl.textContent = 'تم الرفع بنجاح ✓';
+                            statusEl.style.color = 'var(--success-color)';
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+
+            setupImageUploader('universityLogo', 'universityLogoStatus', reportData.logos, 'university');
+            setupImageUploader('collegeLogo', 'collegeLogoStatus', reportData.logos, 'college');
+            setupImageUploader('evaluatorSignature', 'evaluatorSignatureStatus', reportData.signatures, 'evaluator');
+            setupImageUploader('directorSignature', 'directorSignatureStatus', reportData.signatures, 'director');
+            setupImageUploader('headSignature', 'headSignatureStatus', reportData.signatures, 'head');
+
+
+            // ---- زر تحميل نموذج Excel ----
+            downloadTemplateBtn.addEventListener('click', downloadExcelTemplate);
+
+
+            // ---- زر إنشاء التقرير (الدماغ) ----
+            
+            generateReportBtn.addEventListener('click', async () => {
+                loadingElement.style.display = 'flex';
+                
+                try {
+                    // 1. جمع البيانات الأساسية والشعارات
+                    reportData.courseInfo = {
+                        name: document.getElementById('courseName').value || "غير محدد",
+                        code: document.getElementById('courseCode').value || "غير محدد",
+                        level: document.getElementById('courseLevel').value || "غير محدد",
+                        year: document.getElementById('academicYear').value || "غير محدد",
+                        evalDate: document.getElementById('evaluationDate').value || new Date().toISOString().split('T')[0]
+                    };
+
+                    // ** جديد: الحصول على الدرجة الكلية للمقالي المختارة **
+                    const essayMaxScore = document.querySelector('input[name="essayTotal"]:checked').value;
+
+                    // 2. قراءة بيانات Excel أو JSON
+                    const file = dataFileInput.files[0];
+                    const jsonData = jsonDataInput.value;
+
+                    if (!file && !jsonData) {
+                        throw new Error('يرجى رفع ملف Excel أو لصق بيانات JSON أولاً.');
+                    }
+
+                    if (file) {
+                        reportData.sheets = await parseExcelFile(file);
+                    } else if (jsonData) {
+                        reportData.sheets = JSON.parse(jsonData);
+                    }
+
+                    // 3. تنفيذ التحليل (مع تمرير الدرجة العظمى للمقالي)
+                    processAllData(essayMaxScore);
+
+                    // 4. إنشاء وعرض التقرير
+                    generateReportHTML();
+                    toggleActionButtons(false);
+
+                } catch (error) {
+                    showError(`حدث خطأ: ${error.message}`);
+                    console.error(error);
+                } finally {
+                    loadingElement.style.display = 'none';
+                }
+            });
+
+            // ---- 1. قراءة ملف Excel ----
+            
+            function parseExcelFile(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const data = event.target.result;
+                            const workbook = XLSX.read(data, { type: 'binary' });
+                            const sheetsData = {};
+                            
+                            const expectedSheets = [
+                                'المواصفات الشكلية', 
+                                'معايير الجودة', 
+                                'جودة التنسيق', 
+                                'جودة MCQ', 
+                                'جودة المقالي', 
+                                'العدالة والموضوعية', 
+                                'الإعدادات التقنية',
+                                'التحليل الإحصائي',
+                                'تحليل المقالي'
+                            ];
+
+                            workbook.SheetNames.forEach(sheetName => {
+                                const foundName = expectedSheets.find(name => sheetName.includes(name));
+                                if (foundName) {
+                                    const worksheet = workbook.Sheets[sheetName];
+                                    const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                                    sheetsData[foundName] = cleanSheetData(json);
+                                }
+                            });
+
+                            if (Object.keys(sheetsData).length === 0) {
+                                throw new Error("لم يتم العثور على أي شيتات (Tabs) بالأسماء المتوقعة في ملف Excel.");
+                            }
+                            
+                            resolve(sheetsData);
+                        } catch (e) {
+                            reject(e);
+                        }
+                    };
+                    reader.onerror = (error) => reject(error);
+                    reader.readAsBinaryString(file);
+                });
+            }
+
+            function cleanSheetData(data) {
+                let startIndex = data.findIndex(row => row[0] && (row[0].includes('المعيار') || row[0].includes('رقم السؤال') || row[0].includes('م')));
+                if (startIndex === -1) startIndex = 0;
+
+                return data.slice(startIndex + 1)
+                           .map(row => row.map(cell => (cell !== null && cell !== undefined) ? cell : ""))
+                           .filter(row => row.some(cell => cell.toString().trim() !== ""));
+            }
+
+
+            // ---- 2. معالجة البيانات وتحليلها ----
+            
+            function processAllData(essayMaxScore) {
+                reportData.analysis = {};
+
+                reportData.analysis.sheet1_Formal = processFormalSpecs(reportData.sheets['المواصفات الشكلية']);
+                reportData.analysis.sheet2_Quality = processCriteria(reportData.sheets['معايير الجودة'], 3, 9);
+                reportData.analysis.sheet3_Formatting = processCriteria(reportData.sheets['جودة التنسيق'], 6, 18);
+                reportData.analysis.sheet4_MCQ = processCriteria(reportData.sheets['جودة MCQ'], 3, 9);
+                reportData.analysis.sheet5_Essay = processCriteria(reportData.sheets['جودة المقالي'], 3, 9);
+                reportData.analysis.sheet6_Fairness = processCriteria(reportData.sheets['العدالة والموضوعية'], 2, 6);
+                reportData.analysis.sheet7_Technical = processCriteria(reportData.sheets['الإعدادات التقنية'], 5, 15);
+                
+                reportData.analysis.sheet8_Stats = processStats(reportData.sheets['التحليل الإحصائي']);
+                // تمرير الدرجة العظمى للمقالي للدالة
+                reportData.analysis.sheet9_EssayStats = processEssayStats(reportData.sheets['تحليل المقالي'], parseFloat(essayMaxScore));
+
+                reportData.analysis.quantitativeSummary = calculateQuantitativeSummary(
+                    reportData.analysis.sheet8_Stats,
+                    reportData.analysis.sheet9_EssayStats
+                );
+
+                reportData.analysis.summary = calculateSummary();
+            }
+
+            function processFormalSpecs(sheetData) {
+                if (!sheetData) return { totalScore: 0, maxScore: 15, percentage: 0, rating: 'ضعيف', items: [] };
+                
+                let totalScore = 0;
+                const items = sheetData.map(row => {
+                    const status = (row[1] !== undefined && row[1].toString() === '1') ? 1 : 0;
+                    totalScore += status;
+                    return {
+                        criteria: row[0] || "غير محدد",
+                        statusText: status === 1 ? "متاح" : "غير متاح",
+                        notes: row[3] || ""
+                    };
+                });
+
+                const maxScore = items.length > 0 ? items.length : 15;
+                const percentage = (totalScore / maxScore) * 100;
+                
+                return {
+                    totalScore: totalScore,
+                    maxScore: maxScore,
+                    percentage: parseFloat(percentage.toFixed(1)),
+                    rating: getRating(percentage),
+                    items: items
+                };
+            }
+
+            function processCriteria(sheetData, expectedItems, maxScore) {
+                if (!sheetData) return { totalScore: 0, maxScore: maxScore, percentage: 0, rating: 'ضعيف', items: [] };
+                
+                let totalScore = 0;
+                const items = sheetData.map(row => {
+                    let score = 0;
+                    if (row[2] !== undefined && row[2].toString().trim() !== "") score = 3;
+                    else if (row[3] !== undefined && row[3].toString().trim() !== "") score = 2;
+                    else if (row[4] !== undefined && row[4].toString().trim() !== "") score = 1;
+                    
+                    totalScore += score;
+                    return {
+                        id: row[0] || "-",
+                        criteria: row[1] || "غير محدد",
+                        score: score,
+                        notes: row[5] || ""
+                    };
+                });
+                
+                const actualMaxScore = items.length * 3;
+                const percentage = (totalScore / actualMaxScore) * 100;
+
+                return {
+                    totalScore: totalScore,
+                    maxScore: actualMaxScore,
+                    percentage: parseFloat(percentage.toFixed(1)),
+                    rating: getRating(percentage),
+                    items: items
+                };
+            }
+
+            function processStats(sheetData) {
+                if (!sheetData) return { difficultyAvg: 0, items: [], alternatives: { effective: 0, partial: 0, ineffective: 0 } };
+
+                let totalDifficulty = 0;
+                let effective = 0, partial = 0, ineffective = 0;
+                
+                const mcqItems = [];
+
+                sheetData.forEach(row => {
+                    const firstCell = row[0] ? row[0].toString() : "";
+                    
+                    if (firstCell.trim() !== "" && !isNaN(parseFloat(firstCell))) {
+                        const questionId = firstCell;
+                        const difficulty = parseFloat(row[1]) || 0;
+                        totalDifficulty += difficulty;
+                        
+                        const difficultyRating = getDifficultyRating(difficulty);
+                        
+                        const alt1 = parseFloat(row[3]) || 0;
+                        const alt2 = parseFloat(row[4]) || 0;
+                        const alt3 = parseFloat(row[5]) || 0;
+                        
+                        let zeroAlts = 0;
+                        if (alt1 === 0) zeroAlts++;
+                        if (alt2 === 0) zeroAlts++;
+                        if (alt3 === 0) zeroAlts++;
+
+                        let altRating = '';
+                        if (zeroAlts === 0) {
+                            altRating = "فعالة جداً";
+                            effective++;
+                        } else if (zeroAlts === 1) {
+                            altRating = "فعالة جزئياً";
+                            partial++;
+                        } else {
+                            altRating = "غير فعالة";
+                            ineffective++;
+                        }
+
+                        mcqItems.push({
+                            id: questionId,
+                            difficulty: difficulty,
+                            difficultyRating: difficultyRating,
+                            alt1: alt1, alt2: alt2, alt3: alt3,
+                            altRating: altRating
+                        });
+                    }
+                });
+
+                const difficultyAvg = mcqItems.length > 0 ? (totalDifficulty / mcqItems.length) : 0;
+
+                return {
+                    difficultyAvg: parseFloat(difficultyAvg.toFixed(2)),
+                    difficultyAvgRating: getDifficultyRating(difficultyAvg),
+                    items: mcqItems,
+                    alternatives: { effective, partial, ineffective }
+                };
+            }
+
+            // ** تعديل جوهري: دالة معالجة المقالي تقبل الدرجة العظمى المتغيرة **
+            function processEssayStats(sheetData, maxScore = 15) {
+                if (!sheetData || sheetData.length === 0) {
+                    return { average: 0, percentage: 0, rating: 'N/A', totalScore: maxScore };
+                }
+                
+                const totalScore = maxScore; // استخدام الدرجة المختارة (10 أو 15)
+                const row = sheetData[0]; 
+                const inputAverage = parseFloat(row[0]) || 0;
+                const percentage = (totalScore > 0) ? (inputAverage / totalScore) * 100 : 0;
+                
+                const quantRating = getQuantitativeEssayRating(percentage);
+                const rating = quantRating.text;
+                
+                return {
+                    average: inputAverage,
+                    percentage: parseFloat(percentage.toFixed(1)),
+                    rating: rating,
+                    totalScore: totalScore
+                };
+            }
+
+
+            function calculateSummary() {
+                
+                const quantSummary = reportData.analysis.quantitativeSummary;
+                let quantTotalScore = 0;
+                let quantMaxScore = 0;
+
+                if (quantSummary && quantSummary.difficulty && quantSummary.difficulty.score > 0) {
+                    quantTotalScore += quantSummary.difficulty.score;
+                    quantMaxScore += 3;
+                }
+                if (quantSummary && quantSummary.alternatives && quantSummary.alternatives.score > 0) {
+                    quantTotalScore += quantSummary.alternatives.score;
+                    quantMaxScore += 3;
+                }
+                if (quantSummary && quantSummary.essay && quantSummary.essay.score > 0) {
+                    quantTotalScore += quantSummary.essay.score;
+                    quantMaxScore += 3;
+                }
+
+                const statsPercentage = (quantMaxScore > 0) ? (quantTotalScore / quantMaxScore) * 100 : 0;
+
+                const summary = [
+                    { name: "المواصفات الشكلية (أولاً)", percentage: reportData.analysis.sheet1_Formal.percentage },
+                    { name: "صدق المحتوى والمواءمة (ثانياً)", percentage: reportData.analysis.sheet2_Quality.percentage },
+                    { name: "التصميم الشكلي والوضوح (ثالثاً)", percentage: reportData.analysis.sheet3_Formatting.percentage },
+                    { name: "جودة الصياغة - موضوعي (رابعاً)", percentage: reportData.analysis.sheet4_MCQ.percentage },
+                    { name: "جودة الصياغة - مقالي (خامساً)", percentage: reportData.analysis.sheet5_Essay.percentage },
+                    { name: "العدالة والموضوعية (سادساً)", percentage: reportData.analysis.sheet6_Fairness.percentage },
+                    { name: "دقة الإعدادات التقنية (سابعاً)", percentage: reportData.analysis.sheet7_Technical.percentage },
+                    { name: "التحليل الإحصائي الكمي (ثامناً)", percentage: parseFloat(statsPercentage.toFixed(1)) }
+                ];
+                
+                const totalPercent = summary.reduce((sum, item) => sum + item.percentage, 0);
+                const average = summary.length > 0 ? (totalPercent / summary.length) : 0;
+                
+                return {
+                    items: summary,
+                    average: parseFloat(average.toFixed(1)),
+                    averageRating: getRating(average)
+                };
+            }
+
+            // ---- دوال مساعدة للتقييم ----
+
+            function getRating(percentage) {
+                if (percentage >= 90) return "ممتاز";
+                if (percentage >= 75) return "جيد";
+                if (percentage >= 60) return "مقبول";
+                return "ضعيف";
+            }
+
+            function getDifficultyRating(value) {
+                if (value > 0.8) return "صعب";
+                if (value > 0.7) return "صعب نسبياً";
+                if (value >= 0.4) return "متوسط الصعوبة (ملائم)";
+                if (value >= 0.2) return "سهل نسبياً";
+                if (value >= 0) return "سهل";
+                return "غير محسوب";
+            }
+
+            function getRatingClass(rating) {
+                // التقييمات التقليدية
+                if (rating === "ممتاز") return "rating excellent";
+                if (rating === "جيد") return "rating good";
+                if (rating === "مقبول") return "rating acceptable";
+                if (rating === "ضعيف") return "rating weak";
+
+                // --- الإضافة الجديدة: التقييمات الكمية (ملائم، إلخ) ---
+                if (rating === "ملائم") return "rating excellent"; // أخضر
+                if (rating === "ملائم جزئياً") return "rating acceptable"; // أصفر (يمكن استخدام good أو acceptable حسب الرغبة)
+                if (rating === "غير ملائم") return "rating weak"; // أحمر
+                
+                return "rating weak";
+            }
+            
+            function getDifficultyRatingClass(ratingText) {
+                if (ratingText === "متوسط الصعوبة (ملائم)") return "rating excellent"; 
+                if (ratingText === "سهل نسبياً") return "rating acceptable"; 
+                if (ratingText === "سهل") return "rating acceptable"; 
+                if (ratingText === "صعب نسبياً") return "rating weak"; 
+                if (ratingText === "صعب") return "rating weak"; 
+                return "";
+            }
+
+            
+            // ---- 4. دوال حساب التقييم الكمي ----
+            
+            function calculateQuantitativeSummary(statsData, essayData) {
+                const avgDifficulty = statsData.difficultyAvg || 0;
+                const difficultyRating = getQuantitativeDifficultyRating(avgDifficulty);
+
+                const totalMCQ = statsData.items.length;
+                const effectiveAlts = statsData.alternatives.effective;
+                const effectivePercent = (totalMCQ > 0) ? (effectiveAlts / totalMCQ) * 100 : 0;
+                const alternativesRating = getQuantitativeAlternativesRating(effectivePercent);
+
+                const essayPercent = essayData.percentage || 0;
+                const essayRating = getQuantitativeEssayRating(essayPercent);
+
+                return {
+                    difficulty: { value: avgDifficulty.toFixed(2), ...difficultyRating },
+                    alternatives: { value: effectivePercent.toFixed(1), ...alternativesRating },
+                    essay: { value: essayPercent.toFixed(1), ...essayRating }
+                };
+            }
+
+            function getQuantitativeDifficultyRating(avg) {
+                if (avg >= 0.4 && avg <= 0.7) {
+                    return { text: "ملائم", score: 3 };
+                }
+                if ((avg > 0.7 && avg < 0.9) || (avg > 0.1 && avg < 0.4)) {
+                    return { text: "ملائم جزئيا", score: 2 };
+                }
+                if (avg > 0.9 || avg < 0.1) {
+                    return { text: "غير ملائم", score: 1 };
+                }
+                if (avg === 0) return { text: "N/A", score: 0 };
+                return { text: "غير ملائم", score: 1 };
+            }
+
+            function getQuantitativeAlternativesRating(percent) {
+                if (percent > 60) {
+                    return { text: "ملائم", score: 3 };
+                }
+                if (percent > 30 && percent <= 60) {
+                    return { text: "ملائم جزئياً", score: 2 };
+                }
+                if (percent <= 30) {
+                    return { text: "غير ملائم", score: 1 };
+                }
+                return { text: "N/A", score: 0 };
+            }
+
+            function getQuantitativeEssayRating(percent) {
+                if (percent >= 60 && percent <= 90) { 
+                    return { text: "ملائم", score: 3 }; 
+                }
+                if ((percent > 30 && percent < 50) || 
+                    (percent > 90 && percent < 95) || 
+                    (percent >= 50 && percent < 60)) 
+                {
+                    return { text: "ملائم جزئياً", score: 2 };
+                }
+                if (percent >= 95 || percent <= 30) {
+                    return { text: "غير ملائم", score: 1 };
+                }
+                return { text: "N/A", score: 0 }; 
+            }
+
+
+            
+            // ---- 3. إنشاء صفحات التقرير (HTML) ----
+            
+            function generateReportHTML() {
+                reportContainer.innerHTML = '';
+                reportContainer.style.display = 'block';
+
+                createCoverPage();
+                
+                createCriteriaPage("أولاً: المواصفات الشكلية (من 15 درجة)", reportData.analysis.sheet1_Formal, createFormalSpecsTable);
+                createCriteriaPage("ثانياً: معايير جودة الامتحان", reportData.analysis.sheet2_Quality, createCriteriaTable);
+                createCriteriaPage("ثالثاً: جودة التنسيق ووضوح التعليمات", reportData.analysis.sheet3_Formatting, createCriteriaTable);
+                createCriteriaPage("رابعاً: جودة الصياغة الفنية (MCQ)", reportData.analysis.sheet4_MCQ, createCriteriaTable);
+                createCriteriaPage("خامساً: جودة الصياغة الفنية (الأسئلة المقالية)", reportData.analysis.sheet5_Essay, createCriteriaTable);
+                createCriteriaPage("سادساً: العدالة والموضوعية وتكافؤ الفرص", reportData.analysis.sheet6_Fairness, createCriteriaTable);
+                createCriteriaPage("سابعاً: دقة الإعدادات التقنية على المنصة", reportData.analysis.sheet7_Technical, createCriteriaTable);
+                
+                createStatsPage();
+
+                if (reportData.analysis.sheet8_Stats.items.length > 0) {
+                    createDifficultyChartPage(reportData.analysis.sheet8_Stats.items);
+                    createAlternativesChartPage(reportData.analysis.sheet8_Stats.alternatives);
+                }
+
+                createSummaryPage();
+            }
+
+            function createCoverPage() {
+                const page = createReportPage();
+                page.classList.add('cover-page');
+                
+                const evalDateFormatted = reportData.courseInfo.evalDate 
+                    ? new Date(reportData.courseInfo.evalDate).toLocaleDateString('ar-EG-u-nu-latn', { year: 'numeric', month: 'long', day: 'numeric' })
+                    : new Date().toLocaleDateString('ar-EG-u-nu-latn', { year: 'numeric', month: 'long', day: 'numeric' });
+
+                page.innerHTML = `
+                    <div class="logos-container">
+                        ${reportData.logos.university ? `<img src="${reportData.logos.university}" class="logo left">` : '<div class="logo left"></div>'}
+                        ${reportData.logos.college ? `<img src="${reportData.logos.college}" class="logo right">` : '<div class="logo right"></div>'}
+                    </div>
+                    
+                    <div class="cover-main">
+                        <h1 class="cover-title">تقرير تقييم جودة الورقة الامتحانية</h1>
+                        <div class="cover-details">
+                            <p><strong>اسم المقرر:</strong> ${reportData.courseInfo.name}</p>
+                            <p><strong>كود المقرر:</strong> ${reportData.courseInfo.code}</p>
+                            <p><strong>المستوى الدراسي:</strong> ${reportData.courseInfo.level}</p>
+                            <p><strong>العام الأكاديمي:</strong> ${reportData.courseInfo.year}</p>
+                        </div>
+                    </div>
+
+                    <div class="cover-footer">
+                        <p>تاريخ إعداد التقرير: ${evalDateFormatted}</p>
+                    </div>
+                `;
+                reportContainer.appendChild(page);
+            }
+            
+            function createCriteriaPage(title, analysisData, tableBuilderFunction) {
+                const page = createReportPage();
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'page-content';
+
+                const summaryBox = `
+                    <div class="summary-box">
+                        <h5><i class="fas fa-poll-h"></i> ملخص المعيار</h5>
+                        <p><strong>الدرجة المستحقة:</strong> ${analysisData.totalScore} من ${analysisData.maxScore}</p>
+                        <p><strong>النسبة المئوية:</strong> ${analysisData.percentage}%</p>
+                        <p><strong>التقدير العام للمعيار:</strong> <span class="${getRatingClass(analysisData.rating)}">${analysisData.rating}</span></p>
+                    </div>
+                `;
+
+                contentDiv.innerHTML = `
+                    ${createPageHeader(title)}
+                    <h4 class="report-section-title">التفاصيل والتقييم</h4>
+                    ${tableBuilderFunction(analysisData.items)}
+                    ${summaryBox}
+                `;
+                
+                page.appendChild(contentDiv);
+                addFooterToPage(page);
+                reportContainer.appendChild(page);
+            }
+
+            function createFormalSpecsTable(items) {
+                let rows = items.map(item => `
+                    <tr>
+                        <td>${item.criteria}</td>
+                        <td style="text-align: center; color: ${item.statusText === 'متاح' ? 'var(--success-color)' : 'var(--danger-color)'}; font-weight: bold;">${item.statusText}</td>
+                        <td class="table-notes">${item.notes}</td>
+                    </tr>
+                `).join('');
+                
+                return `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 50%;">المعيار</th>
+                                <th style="width: 15%;">الحالة (1=متاح، 0=غير متاح)</th>
+                                <th>ملاحظات</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                `;
+            }
+
+            function createCriteriaTable(items) {
+                let rows = items.map(item => `
+                    <tr>
+                        <td>${item.id}</td>
+                        <td>${item.criteria}</td>
+                        <td>${item.score} / 3</td>
+                        <td class="table-notes">${item.notes}</td>
+                    </tr>
+                `).join('');
+
+                return `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 10%;">م</th>
+                                <th style="width: 50%;">المعيار</th>
+                                <th style="width: 15%;">الدرجة (من 3)</th>
+                                <th>ملاحظات (تغذية راجعة)</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                `;
+            }
+
+            function createStatsPage() {
+                const page = createReportPage();
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'page-content';
+                const analysisData = reportData.analysis.sheet8_Stats;
+
+                let tableRows = analysisData.items.map(item => `
+                    <tr>
+                        <td>${item.id}</td>
+                        <td>${item.difficulty}</td>
+                        <td class="${getDifficultyRatingClass(item.difficultyRating)}">${item.difficultyRating}</td>
+                        <td>${item.alt1}%</td>
+                        <td>${item.alt2}%</td>
+                        <td>${item.alt3}%</td>
+                        <td class="${item.altRating === 'غير فعالة' ? 'rating weak' : ''}">${item.altRating}</td>
+                    </tr>
+                `).join('');
+
+                contentDiv.innerHTML = `
+                    ${createPageHeader("ثامناً: التحليل الإحصائي لأداء الاختبار")}
+                    
+                    <h4 class="report-section-title">أ) تحليل أسئلة الاختيار من متعدد (MCQ)</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>رقم السؤال</th>
+                                <th>معامل الصعوبة</th>
+                                <th>التقييم</th>
+                                <th>% البديل 1</th>
+                                <th>% البديل 2</th>
+                                <th>% البديل 3</th>
+                                <th>فعالية البدائل</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                    
+                    <div class="summary-box">
+                        <h5><i class="fas fa-calculator"></i> ملخص تحليل (MCQ)</h5>
+                        <p><strong>متوسط معامل الصعوبة لجميع الأسئلة:</strong> ${analysisData.difficultyAvg}</p>
+                        <p><strong>التقييم العام للصعوبة:</strong> <span class="${getDifficultyRatingClass(analysisData.difficultyAvgRating)}">${analysisData.difficultyAvgRating}</span></p>
+                    </div>
+
+                    <h4 class="report-section-title">ب) تحليل الأسئلة المقالية</h4>
+                    ${createEssayStatsTable(reportData.analysis.sheet9_EssayStats)}
+
+                    <h4 class="report-section-title">ج) ملخص التقييم الكمي (لأغراض إحصائية)</h4>
+                    ${createQuantitativeSummaryTable(reportData.analysis.quantitativeSummary)}
+                `;
+                
+                page.appendChild(contentDiv);
+                addFooterToPage(page);
+                reportContainer.appendChild(page);
+            }
+
+            function createEssayStatsTable(essayData) {
+                if (!essayData || essayData.rating === 'N/A') {
+                    return "<p>لم يتم إدخال بيانات تحليل الأسئلة المقالية في الشيت المخصص.</p>";
+                }
+                
+                return `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>متوسط درجات الطلاب</th>
+                                <th>الدرجة الكلية</th>
+                                <th>نسبة المتوسط</th>
+                                <th>التقييم</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="text-align: center;">${essayData.average.toFixed(2)}</td>
+                                <td style="text-align: center;">${essayData.totalScore}</td>
+                                <td style="text-align: center;">${essayData.percentage}%</td>
+                                <td style="text-align: center;" class="${getRatingClass(essayData.rating)}">${essayData.rating}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                `;
+            }
+
+            function createQuantitativeSummaryTable(summaryData) {
+                if (!summaryData) return "<p>لا توجد بيانات للتقييم الكمي.</p>";
+
+                const { difficulty, alternatives, essay } = summaryData;
+
+                const getRatingStyle = (score) => {
+                    if (score === 3) return 'color: #28a745; font-weight: bold;';
+                    if (score === 2) return 'color: #ffc107; font-weight: bold;';
+                    if (score === 1) return 'color: #dc3545; font-weight: bold;';
+                    return '';
+                };
+
+                return `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>المعيار الكمي</th>
+                                <th>القيمة المحسوبة</th>
+                                <th>التقييم (نصي)</th>
+                                <th>التقييم (رقمي)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>متوسط معاملات الصعوبة</td>
+                                <td>${difficulty.value}</td>
+                                <td style="${getRatingStyle(difficulty.score)}">${difficulty.text}</td>
+                                <td style="text-align: center; ${getRatingStyle(difficulty.score)}">${difficulty.score}</td>
+                            </tr>
+                            <tr>
+                                <td>نسبة البدائل الفعالة</td>
+                                <td>${alternatives.value}%</td>
+                                <td style="${getRatingStyle(alternatives.score)}">${alternatives.text}</td>
+                                <td style="text-align: center; ${getRatingStyle(alternatives.score)}">${alternatives.score}</td>
+                            </tr>
+                            <tr>
+                                <td>نسبة درجات المقالي</td>
+                                <td>${essay.value}%</td>
+                                <td style="${getRatingStyle(essay.score)}">${essay.text}</td>
+                                <td style="text-align: center; ${getRatingStyle(essay.score)}">${essay.score}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                `;
+            }
+
+
+            function createDifficultyBarChart(items) {
+                const ctx = document.getElementById('difficultyBarChart')?.getContext('2d');
+                if (!ctx) return;
+                
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: items.map(item => `س ${item.id}`),
+                        datasets: [{
+                            label: 'معامل الصعوبة',
+                            data: items.map(item => item.difficulty),
+                            backgroundColor: items.map(item => {
+                                const value = item.difficulty;
+                                if (value > 0.7) return '#dc3545';
+                                if (value >= 0.4) return '#28a745';
+                                if (value >= 0) return '#ffc107';
+                                return '#868e96';
+                            }),
+                            borderColor: '#fff',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, max: 1, title: { display: true, text: 'معامل الصعوبة' } } }
+                    }
+                });
+            }
+            
+            function createDifficultyChartPage(items) {
+                const page = createReportPage();
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'page-content';
+                
+                contentDiv.innerHTML = `
+                    ${createPageHeader("ثامناً: التحليل الإحصائي (تابع)")}
+                    <h4 class="report-section-title">رسم (1): توزيع معاملات الصعوبة للأسئلة</h4>
+                    <div class="chart-container" style="height: 500px;"><canvas id="difficultyBarChart"></canvas></div>
+                    <div class="summary-box" style="padding: 10px; margin-top: 15px;">
+                        <h5 style="font-size: 16px; margin-bottom: 8px;"><i class="fas fa-info-circle"></i> مفتاح دلالة الرسم البياني</h5>
+                        <p style="font-size: 12px; margin-bottom: 3px;"><span style="color: #28a745; font-weight: bold;">■ اللون الأخضر:</span> متوسط الصعوبة (0.4 - 0.7)</p>
+                        <p style="font-size: 12px; margin-bottom: 3px;"><span style="color: #ffc107; font-weight: bold;">■ اللون الأصفر:</span> سهل (0 - 0.19) أو سهل نسبياً (0.2 - 0.39)</p>
+                        <p style="font-size: 12px; margin-bottom: 3px;"><span style="color: #dc3545; font-weight: bold;">■ اللون الأحمر:</span> صعب نسبياً (0.71 - 0.8) أو صعب (أكبر من 0.8)</p>
+                    </div>
+                `;
+                
+                page.appendChild(contentDiv);
+                addFooterToPage(page);
+                reportContainer.appendChild(page);
+
+                setTimeout(() => createDifficultyBarChart(items), 100);
+            }
+
+            function createAlternativesPieChart(alternatives) {
+                const ctx = document.getElementById('alternativesPieChart')?.getContext('2d');
+                if (!ctx) return;
+                
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['فعالة جداً', 'فعالة جزئياً', 'غير فعالة'],
+                        datasets: [{
+                            data: [alternatives.effective, alternatives.partial, alternatives.ineffective],
+                            backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: { callbacks: { label: (context) => `${context.label}: ${context.raw} أسئلة` } }
+                        }
+                    }
+                });
+            }
+            
+            function createAlternativesChartPage(alternatives) {
+                const page = createReportPage();
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'page-content';
+                
+                contentDiv.innerHTML = `
+                    ${createPageHeader("ثامناً: التحليل الإحصائي (تابع)")}
+                    <h4 class="report-section-title">رسم (2): توزيع فعالية بدائل الأسئلة (المشتتات)</h4>
+                    <div class="chart-container" style="height: 450px; max-width: 500px; margin: 20px auto;"><canvas id="alternativesPieChart"></canvas></div>
+                    <div class="summary-box">
+                        <h5><i class="fas fa-info-circle"></i> مفتاح دلالة الرسم البياني</h5>
+                        <p><span style="color: var(--success-color); font-weight: bold;">■ فعالة جداً:</span> جميع البدائل الخاطئة جذبت عدداً من الطلاب.</p>
+                        <p><span style="color: var(--warning-color); font-weight: bold;">■ فعالة جزئياً:</span> بديل واحد فقط لم يجذب أي طلاب (0%).</p>
+                        <p><span style="color: var(--danger-color); font-weight: bold;">■ غير فعالة:</span> بديلان أو أكثر لم يتم اختيارهم، مما يضعف السؤال.</p>
+                    </div>
+                `;
+                
+                page.appendChild(contentDiv);
+                addFooterToPage(page);
+                reportContainer.appendChild(page);
+
+                setTimeout(() => createAlternativesPieChart(alternatives), 100);
+            }
+
+            function createSummaryRadarChart(items) {
+                const ctx = document.getElementById('summaryRadarChart')?.getContext('2d');
+                if (!ctx) return;
+                
+                new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: items.map(item => item.name.split('(')[0].trim()),
+                        datasets: [{
+                            label: 'النسبة المئوية للتقييم',
+                            data: items.map(item => item.percentage),
+                            backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                            borderColor: 'rgba(0, 123, 255, 1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: 'rgba(0, 123, 255, 1)'
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 100,
+                                angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                                grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                                pointLabels: { font: { size: 10, family: 'Cairo' }, color: '#000' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function createSummaryPage() {
+                const page = createReportPage();
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'page-content';
+                const summaryData = reportData.analysis.summary;
+
+                let tableRows = summaryData.items.map(item => `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>${item.percentage}%</td>
+                        <td class="${getRatingClass(getRating(item.percentage))}">${getRating(item.percentage)}</td>
+                    </tr>
+                `).join('');
+
+                tableRows += `
+                    <tr style="background-color: #e9ecef; font-weight: bold; font-size: 1.1em;">
+                        <td>المتوسط العام للتقرير</td>
+                        <td>${summaryData.average}%</td>
+                        <td class="${getRatingClass(summaryData.averageRating)}">${summaryData.averageRating}</td>
+                    </tr>
+                `;
+                
+                contentDiv.innerHTML = `
+                    ${createPageHeader("تاسعاً: ملخص التقييم الكمي")}
+                    
+                    <h4 class="report-section-title">أ) رسم بياني مجمع لتقييم المعايير</h4>
+                    <div class="radar-chart-container">
+                        <canvas id="summaryRadarChart"></canvas>
+                    </div>
+
+                    <h4 class="report-section-title">ب) جدول ملخص التقييم</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>المعيار الرئيسي</th>
+                                <th>النسبة المستحقة (من 100%)</th>
+                                <th>التقدير</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                `;
+                
+                page.appendChild(contentDiv);
+                addFooterToPage(page);
+                reportContainer.appendChild(page);
+
+                setTimeout(() => createSummaryRadarChart(summaryData.items), 100);
+            }
+
+            function createReportPage() {
+                const page = document.createElement('div');
+                page.className = 'report-page';
+                return page;
+            }
+            
+            function createPageHeader(subtitle) {
+                return `
+                <div class="page-header">
+                    <div class="header-logo-left">${reportData.logos.college ? `<img src="${reportData.logos.college}" class="header-logo">` : ''}</div>
+                    <div class="header-title"><h3>${reportData.courseInfo.name} (${reportData.courseInfo.code})</h3><p>${subtitle}</p></div>
+                    <div class="header-logo-right">${reportData.logos.university ? `<img src="${reportData.logos.university}" class="header-logo">` : ''}</div>
+                </div>`;
+            }
+
+            function addFooterToPage(page) {
+                const footer = document.createElement('div');
+                footer.className = 'report-footer';
+                
+                const evaluatorSig = reportData.signatures.evaluator 
+                    ? `<img src="${reportData.signatures.evaluator}" class="signature-image">` 
+                    : `<div class="signature-placeholder"></div>`;
+                    
+                const directorSig = reportData.signatures.director 
+                    ? `<img src="${reportData.signatures.director}" class="signature-image">` 
+                    : `<div class="signature-placeholder"></div>`;
+
+                const headSig = reportData.signatures.head 
+                    ? `<img src="${reportData.signatures.head}" class="signature-image">` 
+                    : `<div class="signature-placeholder"></div>`;
+
+                footer.innerHTML = `
+                    <div class="signature-area">
+                        <p>إعداد لجنة القياس والتقويم</p>
+                        ${evaluatorSig}
+                    </div>
+                    <div class="signature-area">
+                        <p>مدير البرنامج</p>
+                        ${directorSig}
+                    </div>
+                    <div class="signature-area">
+                        <p>وكيل الكلية لشئون التعليم والطلاب</p>
+                        ${headSig}
+                    </div>
+                `;
+                page.appendChild(footer);
+            }
+            
+            function s2ab(s) {
+                const buf = new ArrayBuffer(s.length);
+                const view = new Uint8Array(buf);
+                for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+                return buf;
+            }
+
+            function downloadExcelTemplate() {
+                const wb = XLSX.utils.book_new();
+
+                const ws1_data = [
+                    ["المعيار", "متاح (1)", "غير متاح (0)", "ملاحظات"],
+                    ["اسم الجامعة", "", "", "(هل هو واضح؟)"],
+                    ["شعار الجامعة", "", "", "(هل هو موجود؟)"],
+                    ["اسم الكلية", "", "", "(هل هو واضح؟)"],
+                    ["شعار الكلية", "", "", "(هل هو موجود؟)"],
+                    ["اسم القسم", "", "", "(هل هو واضح؟)"],
+                    ["اسم البرنامج", "", "", "(الذي يدرس به المقرر)"],
+                    ["الفصل الدراسي", "", "", ""],
+                    ["العام الأكاديمي", "", "", ""],
+                    ["اسم المقرر", "", "", "(مطابق للائحة)"],
+                    ["كود المقرر", "", "", ""],
+                    ["المستوى الدراسي", "", "", ""],
+                    ["تاريخ الامتحان", "", "", ""],
+                    ["زمن الامتحان", "", "", ""],
+                    ["الدرجة الكلية", "", "", ""],
+                    ["تكوين الاختبار", "", "", ""]
+                ];
+                const ws1 = XLSX.utils.aoa_to_sheet(ws1_data);
+                XLSX.utils.book_append_sheet(wb, ws1, 'المواصفات الشكلية');
+
+                const ws2_data = [
+                    ["م", "المعيار", "مطابق (3)", "مطابق جزئياً (2)", "غير مطابق(1)", "ملاحظات"],
+                    ["1", "تغطية مخرجات التعلم (ILOs): هل تم ربط كل سؤال بشكل واضح بأحد مخرجات التعلم المستهدفة (ILOs)؟ وهل تم تغطية جميع المخرجات الأساسية؟", "", "", "", "(اذكر المخرجات التي لم تُغطَ)"],
+                    ["2", "جدول توصيف المقرر : هل يتطابق توزيع الدرجات على الموضوعات (أو المخرجات) مع الأهمية النسبية (الوزن النسبي) المحددة في جدول توصيف المقرر؟", "", "", "", ""],
+                    ["3", "قياس المستويات المعرفية (Bloom's Taxonomy): هل يوازن الاختبار بين المستويات المعرفية؟ وهل تُخصص الأسئلة المقالية لقياس المستويات العليا (التحليل، التقييم، الابتكار)؟", "", "", "", "(هل يركز الاختبار على التذكر فقط؟)"]
+                ];
+                const ws2 = XLSX.utils.aoa_to_sheet(ws2_data);
+                XLSX.utils.book_append_sheet(wb, ws2, 'معايير الجودة');
+
+                const ws3_data = [
+                    ["م", "المعيار", "مطابق (3)", "مطابق جزئياً (2)", "غير مطابق(1)", "ملاحظات (تغذية راجعة)"],
+                    ["1", "وضوح التعليمات العامة: هل تعليمات الامتحان (الوقت، عدد الأسئلة، توزيع الدرجات، طريقة الإجابة) واضحة ومكتوبة في بداية الاختبار؟", "", "", "", ""],
+                    ["2", "الوضوح البصري (الخطوط والمسافات): هل حجم الخط ونوعه مريح للعين (لا يقل عن 12)؟ وهل المسافات بين الأسطر والكلمات مناسبة؟", "", "", "", ""],
+                    ["3", "تنظيم الصفحة (عدم الازدحام): هل الصفحة/القسم (Section) في (Forms) غير مزدحم بالأسئلة؟ وهل الرسوم (إن وجدت) واضحة؟", "", "", "", ""],
+                    ["4", "وضوح الترقيم والتسلسل: هل ترقيم الأسئلة والخيارات واضح وصحيح؟", "", "", "", ""],
+                    ["5", "رسالة الانتهاء: هل توجد عبارة واضحة عند نهاية الاختبار (صفحة الإرسال) توحي بانتهاء الأسئلة بنجاح؟", "", "", "", ""],
+                    ["6", "الإشارة لعدد الصفحات/الأقسام: هل هناك إشارة لعدد صفحات (أو أقسام) الاختبار؟", "", "", "", ""]
+                ];
+                const ws3 = XLSX.utils.aoa_to_sheet(ws3_data);
+                XLSX.utils.book_append_sheet(wb, ws3, 'جودة التنسيق');
+
+                const ws4_data = [
+                    ["م", "المعيار", "مطابق (3)", "مطابق جزئياً (2)", "غير مطابق(1)", "ملاحظات"],
+                    ["1", "وضوح رأس السؤال (Stem): هل رأس السؤال واضح، ومحدد، ومصاغ لغوياً بشكل سليم (خالٍ من الأخطاء الإملائية والمطبعية)؟", "", "", "", ""],
+                    ["2", "جودة البدائل (Distractors): هل البدائل الخاطئة (المشتتات) متجانسة (في الطول والصياغة) ومنطقية؟", "", "", "", ""],
+                    ["3", "الإجابة الصحيحة: هل توجد إجابة واحدة فقط هي \"الأصح\" أو \"الصحيحة\" دون أي لبس أو جدل علمي؟", "", "", "", ""]
+                ];
+                const ws4 = XLSX.utils.aoa_to_sheet(ws4_data);
+                XLSX.utils.book_append_sheet(wb, ws4, 'جودة MCQ');
+
+                const ws5_data = [
+                    ["م", "المعيار", "مطابق (3)", "مطابق جزئياً (2)", "غير مطابق(1)", "ملاحظات (تغذية راجعة)"],
+                    ["1", "وضوح المطلوب (Clarity of Prompt): هل يستخدم السؤال أفعالاً إجرائية واضحة (مثل: \"قارن\"، \"حلل\") تحدد للطالب المهمة العقلية المطلوبة بدقة؟", "", "", "", ""],
+                    ["2", "تحديد نطاق الإجابة (Scope): هل نطاق الإجابة محدد بوضوح (مثال: \"اذكر ثلاث مزايا...\")؟", "", "", "", ""],
+                    ["3", "استقلالية الأسئلة: هل إجابة السؤال المقالي مستقلة ولا تعتمد على إجابة سؤال آخر؟", "", "", "", ""]
+                ];
+                const ws5 = XLSX.utils.aoa_to_sheet(ws5_data);
+                XLSX.utils.book_append_sheet(wb, ws5, 'جودة المقالي');
+
+                const ws6_data = [
+                    ["م", "المعيار", "مطابق (3)", "مطابق جزئياً (2)", "غير مطابق(1)", "ملاحظات"],
+                    ["2", "وضوح نموذج الإجابة(للمقالي): هل تم إعداد نموذج إجابة يُفصّل عناصر الإجابة المثالية وتوزيع الدرجات عليها لضمان ثبات التصحيح؟", "", "", "", "(المعيار الأهم لموضوعية المقالي)"],
+                    ["3", "تناسب الزمن مع الأسئلة: هل إجمالي الوقت المخصص كافٍ للطالب متوسط المستوى لإكمال الاختبار (الموضوعي والمقالي) ومراجعته؟", "", "", "", ""]
+                ];
+                const ws6 = XLSX.utils.aoa_to_sheet(ws6_data);
+                XLSX.utils.book_append_sheet(wb, ws6, 'العدالة والموضوعية');
+
+                const ws7_data = [
+                    ["م", "المعيار", "مطابق (3)", "مطابق جزئياً (2)", "غير مطابق(1)", "ملاحظات (تغذية راجعة)"],
+                    ["1", "توزيع الدرجات (رئيسية وفرعية): هل تم مراجعة \"نموذج الإجابة\" (Answer Key) وتوزيع الدرجات على الأسئلة الرئيسية والفرعية (إن وجدت) بدقة 100%؟", "", "", "", ""],
+                    ["2", "تحديد (إجباري / اختياري): هل تم تحديد الأسئلة الإجبارية والاختيارية بوضوح في التعليمات؟ وهل تم ضبط إعداد \"Required\" في (Forms) بشكل صحيح؟", "", "", "", ""],
+                    ["3", "خيارات منع الغش (الموضوعي): هل تم تفعيل خيارات \"خلط ترتيب الأسئلة عشوائياً\" و \"خلط ترتيب الخيارات\" (لزيادة الموضوعية)؟", "", "", "", ""],
+                    ["4", "إعداد الأسئلة المقالية: هل تم اختيار نوع الإجابة \"نص طويل\" (Long Answer)؟ وهل تم التأكد من عدم وجود حد أقصى للحروف يتعارض مع الإجابة المطلوبة؟", "", "", "", ""],
+                    ["5", "وضوح تعليمات (للورقة المنفصلة): (في حال كانت الإجابة على ورقة خارجية) هل التعليمات واضحة وصريحة للطالب بالانتقال للورقة الخارجية؟", "", "", "", ""]
+                ];
+                const ws7 = XLSX.utils.aoa_to_sheet(ws7_data);
+                XLSX.utils.book_append_sheet(wb, ws7, 'الإعدادات التقنية');
+
+                const ws8_data = [
+                    ["رقم السؤال", "معامل الصعوبة", "التقييم", "نسبة البديل 1", "نسبة البديل 2", "نسبة البديل 3"]
+                ];
+                for (let i = 1; i <= 50; i++) {
+                    ws8_data.push([i.toString(), "", "", "", "", ""]);
+                }
+                const ws8 = XLSX.utils.aoa_to_sheet(ws8_data);
+                XLSX.utils.book_append_sheet(wb, ws8, 'التحليل الإحصائي');
+
+                const ws9_data = [
+                    ["متوسط درجات الطلاب (من الدرجة الكلية)", "نسبة المتوسط (تُحسب تلقائياً)", "التقييم (يُحسب تلقائياً)"],
+                    ["", "", ""]
+                ];
+                const ws9 = XLSX.utils.aoa_to_sheet(ws9_data);
+                XLSX.utils.book_append_sheet(wb, ws9, 'تحليل المقالي');
+
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+                
+                const blob = new Blob([s2ab(wbout)], { type: "application/octet-stream" });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'نموذج_تقييم_الورقة_الامتحانية_فارغ.xlsx';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            printReportBtn.addEventListener('click', printReport);
+            exportPDFBtn.addEventListener('click', exportToPDF);
+            exportJSONBtn.addEventListener('click', exportSummaryData);
+            
+            async function printReport() {
+                loadingElement.style.display = 'flex';
+                
+                const canvases = reportContainer.querySelectorAll('canvas');
+                const images = [];
+                for (const canvas of canvases) {
+                    const image = new Image();
+                    image.src = canvas.toDataURL('image/png', 1.0);
+                    image.style.width = '100%';
+                    image.style.height = 'auto';
+                    if (canvas.id === 'summaryRadarChart') {
+                        image.style.maxWidth = '500px'; 
+                        image.style.margin = '20px auto';
+                        image.style.display = 'block';
+                    }
+                    images.push({ original: canvas, replacement: image });
+                    canvas.style.display = 'none';
+                    canvas.parentNode.insertBefore(image, canvas.nextSibling);
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                const printFrame = document.createElement('iframe');
+                printFrame.style.cssText = 'position: absolute; width: 0; height: 0; border: 0;';
+                document.body.appendChild(printFrame);
+                
+                const printDoc = printFrame.contentDocument || printFrame.contentWindow.document;
+                
+                const fontLink = document.querySelector('link[href*="fonts.googleapis.com"]').outerHTML;
+                const faLink = document.querySelector('link[href*="font-awesome"]').outerHTML;
+                let styles = document.querySelector('style').innerHTML;
+                
+                styles = styles.replace(/@media \(max-width: 768px\) \{[\s\S]*?\}/g, '');
+                
+                printDoc.open();
+                printDoc.write(`
+                    <!DOCTYPE html><html lang="ar" dir="rtl"><head><title>طباعة التقرير</title>
+                    ${fontLink}
+                    ${faLink}
+                    <style>${styles}</style>
+                    <style>
+                        @page { size: A4; margin: 15mm; } 
+                        body { 
+                            margin: 0; padding: 0; background: white !important; 
+                            -webkit-print-color-adjust: exact; color-adjust: exact; 
+                        }
+                        .report-page { 
+                            box-shadow: none !important; border: none !important; 
+                            margin: 0 !important; padding: 0 !important; 
+                            width: 100% !important; min-height: 265mm !important; 
+                            page-break-after: always; 
+                            display: flex; flex-direction: column; 
+                        }
+                        .report-page:last-of-type { page-break-after: auto; }
+                        .report-footer, .chart-container, .summary-box { page-break-inside: avoid !important; }
+                        .report-footer { 
+                            margin-top: 20px;
+                            page-break-before: auto; 
+                        }
+                        table { page-break-inside: auto; }
+                        tr { page-break-inside: avoid; }
+                        img { max-width: 100% !important; height: auto; }
+                        .signature-image { 
+                            max-width: 100px !important; 
+                            height: 50px !important; 
+                            object-fit: contain; 
+                        }
+                    </style>
+                    </head><body>${reportContainer.innerHTML}</body></html>`);
+                printDoc.close();
+                
+                printFrame.onload = function() {
+                    try {
+                        printFrame.contentWindow.focus();
+                        printFrame.contentWindow.print();
+                    } catch (e) {
+                        showError("فشلت عملية الطباعة: " + e.message);
+                    } finally {
+                        document.body.removeChild(printFrame);
+                        images.forEach(item => {
+                            item.original.style.display = 'block';
+                            if (item.replacement.parentNode) {
+                                item.replacement.parentNode.removeChild(item.replacement);
+                            }
+                        });
+                        loadingElement.style.display = 'none';
+                    }
+                };
+            }
+
+            async function exportToPDF() {
+                loadingElement.style.display = 'flex';
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                const pages = document.querySelectorAll('.report-page');
+
+                for (let i = 0; i < pages.length; i++) {
+                    const canvas = await html2canvas(pages[i], { scale: 3, useCORS: true });
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdfWidth = doc.internal.pageSize.getWidth();
+                    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                    
+                    if (i > 0) doc.addPage();
+                    
+                    let y = 0;
+                    if (pdfHeight > doc.internal.pageSize.getHeight()) {
+                        let heightLeft = pdfHeight;
+                        while(heightLeft > 0) {
+                            doc.addImage(imgData, 'PNG', 0, y, pdfWidth, pdfHeight);
+                            heightLeft -= doc.internal.pageSize.getHeight();
+                            if (heightLeft > 0) {
+                                doc.addPage();
+                                y = -doc.internal.pageSize.getHeight();
+                            }
+                        }
+                    } else {
+                        doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    }
+                }
+                doc.save(`${reportData.courseInfo.name || 'report'}.pdf`);
+                loadingElement.style.display = 'none';
+            }
+
+            // ---- وظيفة تصدير بيانات JSON الجديدة ----
+            function exportSummaryData() {
+                // تجهيز كائن بيانات نظيف يحتوي فقط على المعلومات والتحليلات
+                // يتم استبعاد الصور والبيانات الخام لتقليل الحجم وتسهيل المعالجة
+                const dataToExport = {
+                    meta: {
+                        generatedAt: new Date().toISOString(),
+                        toolVersion: "1.0",
+                        type: "ExamQualitySummary"
+                    },
+                    courseInfo: reportData.courseInfo,
+                    // ملخص النتائج النهائية
+                    summary: reportData.analysis.summary, 
+                    // الملخص الإحصائي الكمي
+                    quantitative: reportData.analysis.quantitativeSummary, 
+                    // تفاصيل الدرجات لكل معيار بشكل مسطح لسهولة الاستيراد
+                    metrics: {
+                        formal_percentage: reportData.analysis.sheet1_Formal.percentage,
+                        quality_percentage: reportData.analysis.sheet2_Quality.percentage,
+                        formatting_percentage: reportData.analysis.sheet3_Formatting.percentage,
+                        mcq_percentage: reportData.analysis.sheet4_MCQ.percentage,
+                        essay_percentage: reportData.analysis.sheet5_Essay.percentage,
+                        fairness_percentage: reportData.analysis.sheet6_Fairness.percentage,
+                        technical_percentage: reportData.analysis.sheet7_Technical.percentage,
+                        stats_difficulty_avg: reportData.analysis.sheet8_Stats.difficultyAvg
+                    }
+                };
+                
+                // تحويل البيانات إلى نص JSON
+                const jsonString = JSON.stringify(dataToExport, null, 4);
+                const blob = new Blob([jsonString], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                
+                // إنشاء رابط تنزيل وهمي والنقر عليه
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `Summary_${reportData.courseInfo.code || 'Report'}_${reportData.courseInfo.evalDate}.json`;
+                document.body.appendChild(link);
+                link.click();
+                
+                // تنظيف الذاكرة
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
+
+            function toggleActionButtons(disabled) {
+                printReportBtn.disabled = disabled;
+                exportPDFBtn.disabled = disabled;
+                exportJSONBtn.disabled = disabled; // تفعيل/تعطيل زر JSON أيضاً
+            }
+
+            function showError(message) {
+                const errorBox = document.createElement('div');
+                errorBox.style.cssText = `
+                    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+                    background-color: var(--danger-color); color: white; padding: 15px 25px;
+                    border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                    z-index: 10001; font-weight: 600;
+                `;
+                errorBox.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+                document.body.appendChild(errorBox);
+                setTimeout(() => document.body.removeChild(errorBox), 4000);
+            }
+
+            themeSwitch.addEventListener('change', () => {
+                document.body.classList.toggle('dark-mode');
+                localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+            });
+
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-mode');
+                themeSwitch.checked = true;
+            }
+
+            document.getElementById('evaluationDate').valueAsDate = new Date();
+
+        });
+    </script>
+    <!-- ============== نهاية الجزء 6 ============== -->
+</body>
+</html>
