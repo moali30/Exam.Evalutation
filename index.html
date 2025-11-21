@@ -452,7 +452,7 @@
             font-size: 14px;
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
+            align-items: flex-start; /* تعديل: محاذاة من الأعلى */
             color: #000;
             page-break-inside: avoid !important;
         }
@@ -460,23 +460,46 @@
         .signature-area {
             flex: 1;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; /* تعديل: محاذاة المحتوى من الأعلى */
+            gap: 5px; 
         }
         .signature-area p {
             font-weight: bold;
             margin-bottom: 5px;
+            min-height: 25px; /* إضافة: ارتفاع أدنى للعنوان لضمان المحاذاة حتى لو اختلف عدد الأسطر */
         }
+        
+        /* تعديل هنا: جعل التوقيع متجاوبًا */
         .signature-image {
-            max-width: 100px;
-            height: 50px;
+            max-width: 100%; /* عرض متجاوب مع الحاوية */
+            width: auto; /* الحفاظ على النسبة */
+            height: auto; /* الحفاظ على النسبة */
+            max-height: 72px; /* تعديل: تصغير بنسبة 10% (كان 80px) */
             object-fit: contain;
             display: block;
-            margin: 0 auto;
+            margin: 2px auto;
         }
+
+        /* نمط خاص عند وجود توقيعين في نفس الخانة */
+        .signature-area.has-multiple .signature-image {
+            max-height: 40px; /* تعديل: تصغير بنسبة ~10% (كان 45px) */
+            margin: 2px auto;
+        }
+
+        /* نمط خاص عند وجود توقيعين في نفس الخانة */
+        .signature-area.has-multiple .signature-image {
+            max-height: 45px; /* تقليل الارتفاع للنصف تقريباً ليأخذ الاثنين نفس مساحة الواحد */
+            margin: 2px auto;
+        }
+
         .signature-placeholder {
             border-bottom: 1px solid #000;
             width: 150px;
             height: 50px;
-            margin: 0 auto;
+            margin: 5px auto;
         }
 
         /* أنماط الجداول والرسوم البيانية */
@@ -655,8 +678,9 @@
                 </div>
                 
                 <!-- التواقيع -->
+                <!-- تعديل هنا: إضافة توقيع ثاني للجنة القياس -->
                 <div class="form-group">
-                    <label><i class="fas fa-signature"></i> توقيع (لجنة القياس)</label>
+                    <label><i class="fas fa-signature"></i> توقيع لجنة القياس (العضو 1)</label>
                     <div class="file-upload-section">
                         <div class="file-upload">
                             <button class="file-upload-btn"><i class="fas fa-upload"></i> رفع</button>
@@ -665,6 +689,17 @@
                         <span id="evaluatorSignatureStatus" class="upload-status-text"></span>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label><i class="fas fa-signature"></i> توقيع لجنة القياس (العضو 2)</label>
+                    <div class="file-upload-section">
+                        <div class="file-upload">
+                            <button class="file-upload-btn"><i class="fas fa-upload"></i> رفع</button>
+                            <input type="file" id="evaluatorSignature2" accept="image/*">
+                        </div>
+                        <span id="evaluatorSignatureStatus2" class="upload-status-text"></span>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label><i class="fas fa-signature"></i> توقيع مدير البرنامج</label>
                     <div class="file-upload-section">
@@ -728,7 +763,7 @@
             let reportData = {
                 courseInfo: {},
                 logos: { university: '', college: '' },
-                signatures: { evaluator: '', director: '', head: '' },
+                signatures: { evaluator: '', evaluator2: '', director: '', head: '' },
                 sheets: {},
                 analysis: {}
             };
@@ -753,7 +788,10 @@
             });
 
             function setupImageUploader(inputId, statusId, dataObject, key) {
-                document.getElementById(inputId).addEventListener('change', (e) => {
+                const inputElement = document.getElementById(inputId);
+                if(!inputElement) return;
+
+                inputElement.addEventListener('change', (e) => {
                     const file = e.target.files[0];
                     const statusEl = document.getElementById(statusId);
                     if (file) {
@@ -771,6 +809,7 @@
             setupImageUploader('universityLogo', 'universityLogoStatus', reportData.logos, 'university');
             setupImageUploader('collegeLogo', 'collegeLogoStatus', reportData.logos, 'college');
             setupImageUploader('evaluatorSignature', 'evaluatorSignatureStatus', reportData.signatures, 'evaluator');
+            setupImageUploader('evaluatorSignature2', 'evaluatorSignatureStatus2', reportData.signatures, 'evaluator2'); // التوقيع الثاني
             setupImageUploader('directorSignature', 'directorSignatureStatus', reportData.signatures, 'director');
             setupImageUploader('headSignature', 'headSignatureStatus', reportData.signatures, 'head');
 
@@ -1659,10 +1698,27 @@
                 const footer = document.createElement('div');
                 footer.className = 'report-footer';
                 
-                const evaluatorSig = reportData.signatures.evaluator 
-                    ? `<img src="${reportData.signatures.evaluator}" class="signature-image">` 
-                    : `<div class="signature-placeholder"></div>`;
-                    
+                // تعديل هنا: معالجة توقيع لجنة القياس (واحد أو اثنين)
+                let evaluatorContent = '';
+                let evaluatorClass = ''; // متغير للكلاس المضاف في حالة التعدد
+
+                // التحقق من وجود توقيعين
+                if (reportData.signatures.evaluator && reportData.signatures.evaluator2) {
+                    evaluatorClass = 'has-multiple';
+                }
+                
+                // العضو الأول (إلزامي أو أساسي)
+                if (reportData.signatures.evaluator) {
+                    evaluatorContent += `<img src="${reportData.signatures.evaluator}" class="signature-image">`;
+                } else {
+                    evaluatorContent += `<div class="signature-placeholder"></div>`;
+                }
+
+                // العضو الثاني (اختياري) - يظهر تحته مباشرة
+                if (reportData.signatures.evaluator2) {
+                    evaluatorContent += `<img src="${reportData.signatures.evaluator2}" class="signature-image">`;
+                }
+
                 const directorSig = reportData.signatures.director 
                     ? `<img src="${reportData.signatures.director}" class="signature-image">` 
                     : `<div class="signature-placeholder"></div>`;
@@ -1671,10 +1727,11 @@
                     ? `<img src="${reportData.signatures.head}" class="signature-image">` 
                     : `<div class="signature-placeholder"></div>`;
 
+                // تم إضافة كلاس ${evaluatorClass} للـ div المحيط بتواقيع اللجنة
                 footer.innerHTML = `
-                    <div class="signature-area">
+                    <div class="signature-area ${evaluatorClass}">
                         <p>إعداد لجنة القياس والتقويم</p>
-                        ${evaluatorSig}
+                        ${evaluatorContent}
                     </div>
                     <div class="signature-area">
                         <p>مدير البرنامج</p>
@@ -1866,14 +1923,20 @@
                         .report-footer { 
                             margin-top: 20px;
                             page-break-before: auto; 
+                            align-items: flex-start !important; /* تعديل للطباعة */
                         }
                         table { page-break-inside: auto; }
                         tr { page-break-inside: avoid; }
                         img { max-width: 100% !important; height: auto; }
+                        /* تعديل هنا: إزالة القيود الصلبة للسماح بالتنسيق الجديد */
                         .signature-image { 
-                            max-width: 100px !important; 
-                            height: 50px !important; 
+                            max-width: 100% !important; 
+                            height: auto !important; 
+                            max-height: 72px !important; /* تعديل للطباعة: تصغير 10% */
                             object-fit: contain; 
+                        }
+                        .signature-area.has-multiple .signature-image {
+                            max-height: 40px !important; /* تعديل للطباعة */
                         }
                     </style>
                     </head><body>${reportContainer.innerHTML}</body></html>`);
